@@ -1,22 +1,20 @@
 import json
+import asyncio
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.schema import HumanMessage, SystemMessage
+import google.generativeai as genai
+
 from ..config import settings
 from ..models import User, Habit, HabitLog, Evaluation
 from .cache_service import invalidate_cache
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key=settings.GEMINI_API_KEY,
-    temperature=0.7
-)
-
 async def negotiate_habits(goal: str) -> List[dict]:
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-3-flash-preview")
+    
     system_prompt = """You are Fièrté, a ruthless AI performance coach.
 You do not coddle. You do not motivate with kindness.
 You analyze goals and convert them into the minimum viable set of daily habits — measurable, trackable, brutal.
@@ -28,16 +26,11 @@ Rules:
 - Habits must be completable daily. No weekly targets.
 - Be specific. "Exercise" is not a habit. "50 pull-ups" is."""
 
-    user_message = f"Goal: {goal}"
-    
-    messages = [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_message)
-    ]
+    prompt = f"{system_prompt}\n\nGoal: {goal}"
     
     try:
-        response = await llm.ainvoke(messages)
-        content = response.content.strip()
+        response = await asyncio.to_thread(model.generate_content, prompt)
+        content = response.text.strip()
         # Handle cases where LLM might wrap in markdown code blocks
         if content.startswith("```json"):
             content = content.replace("```json", "", 1).replace("```", "", 1).strip()
@@ -45,13 +38,11 @@ Rules:
             content = content.replace("```", "", 1).replace("```", "", 1).strip()
             
         return json.loads(content)
-    except (json.JSONDecodeError, Exception):
+    except (json.JSONDecodeError, Exception) as e:
         # Retry once
-        retry_messages = messages + [
-            HumanMessage(content="Your previous response was not valid JSON. Return ONLY a valid JSON array of habits.")
-        ]
-        response = await llm.ainvoke(retry_messages)
-        content = response.content.strip()
+        retry_prompt = f"{prompt}\n\nYour previous response was not valid JSON. Return ONLY a valid JSON array of habits."
+        response = await asyncio.to_thread(model.generate_content, retry_prompt)
+        content = response.text.strip()
         if content.startswith("```json"):
             content = content.replace("```json", "", 1).replace("```", "", 1).strip()
         elif content.startswith("```"):
@@ -60,7 +51,7 @@ Rules:
         try:
             return json.loads(content)
         except json.JSONDecodeError:
-            raise ValueError("AI returned invalid habit format after retry")
+            raise ValueError(f"AI returned invalid habit format: {e}")
 
 async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
     # 1. Fetch all active habits for user
@@ -106,8 +97,11 @@ async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
         streak = streak_result.scalar() + 1 # Simple streak count for prompt
         prompt = f"You are Fièrté. A user has achieved 100% completion today. This is day {streak} of a perfect streak. Write a 1-2 sentence cold, reluctant acknowledgment. Do not be warm. Do not celebrate. Simply note it like a general noting a soldier met the minimum standard."
 
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
-    ai_message = response.content.strip()
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-3-flash-preview")
+    
+    response = await asyncio.to_thread(model.generate_content, prompt)
+    ai_message = response.text.strip()
     
     # 6. Progressive overload trigger
     overloaded_habits = []

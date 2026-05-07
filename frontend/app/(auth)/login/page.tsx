@@ -36,7 +36,12 @@ export default function LoginPage() {
         router.push("/onboarding");
       }
     } catch (err: any) {
-      setError("Wrong credentials. Try again.");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail[0]?.msg || "Invalid credentials");
+      } else {
+        setError(detail || "Wrong credentials. Try again.");
+      }
     } finally {
       setIsLoading(false);
     }

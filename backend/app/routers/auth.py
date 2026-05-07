@@ -7,25 +7,36 @@ from ..models.user import User
 from ..schemas.user import UserCreate, UserRead, UserUpdate
 from ..services import auth_service
 from ..dependencies import get_current_user
+import logging
+
+logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=dict)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    logger.info(f"Registering user: {user_in.username} ({user_in.email})")
     # Check if user exists
     result = await db.execute(select(User).where((User.email == user_in.email) | (User.username == user_in.username)))
-    if result.scalars().first():
+    existing_user = result.scalars().first()
+    if existing_user:
+        logger.warning(f"Registration failed: User already exists - {user_in.username} or {user_in.email}")
         raise HTTPException(status_code=400, detail="User already registered")
     
-    hashed_password = auth_service.get_password_hash(user_in.password)
-    user = User(
-        email=user_in.email,
-        username=user_in.username,
-        hashed_password=hashed_password
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    try:
+        hashed_password = auth_service.get_password_hash(user_in.password)
+        user = User(
+            email=user_in.email,
+            username=user_in.username,
+            hashed_password=hashed_password
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        logger.info(f"User created successfully: {user.id}")
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during registration")
     
     access_token = auth_service.create_access_token(data={"sub": str(user.id)})
     return {

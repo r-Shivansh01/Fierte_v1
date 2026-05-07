@@ -30,7 +30,12 @@ export default function RegisterPage() {
       localStorage.setItem("fierté_token", data.access_token);
       router.push("/onboarding");
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Registration failed. Try again.");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail[0]?.msg || "Invalid input");
+      } else {
+        setError(detail || "Registration failed. Try again.");
+      }
     } finally {
       setIsLoading(false);
     }
