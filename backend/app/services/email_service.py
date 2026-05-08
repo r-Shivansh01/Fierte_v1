@@ -1,6 +1,5 @@
 import asyncio
 import resend
-from .cache_service import get_cache
 from ..config import settings
 from ..models import User, Evaluation
 

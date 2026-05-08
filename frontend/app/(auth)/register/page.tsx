@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import api from "@/lib/api";
 import { AuthResponse } from "@/lib/types";
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -28,9 +29,17 @@ export default function RegisterPage() {
       });
 
       localStorage.setItem("fierté_token", data.access_token);
+
+      // Sync with next-auth
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
       router.push("/onboarding");
     } catch (err: any) {
-      const detail = err.response?.data?.detail;
+...
       if (Array.isArray(detail)) {
         setError(detail[0]?.msg || "Invalid input");
       } else {

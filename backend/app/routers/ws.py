@@ -1,11 +1,9 @@
 import asyncio
 import json
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from jose import JWTError, jwt
 from ..config import settings
-from ..database import get_db, SessionLocal
-from ..models.user import User
+from ..database import SessionLocal
 from ..models.habit import Habit
 from ..services import ai_service
 

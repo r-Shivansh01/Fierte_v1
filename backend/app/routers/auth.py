@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,8 +14,14 @@ logger = logging.getLogger("uvicorn.error")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=dict)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    logger.info(f"Registering user: {user_in.username} ({user_in.email})")
+async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        body = await request.body()
+        logger.info(f"REGISTRATION ATTEMPT - Raw body: {body.decode()}")
+        logger.info(f"REGISTRATION ATTEMPT - Parsed: {user_in.model_dump()}")
+    except Exception as e:
+        logger.error(f"Error logging registration attempt: {str(e)}")
+
     # Check if user exists
     result = await db.execute(select(User).where((User.email == user_in.email) | (User.username == user_in.username)))
     existing_user = result.scalars().first()

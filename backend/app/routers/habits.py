@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update
+from sqlalchemy import delete
 from typing import List
 from datetime import date
 from ..database import get_db
@@ -31,6 +31,16 @@ async def create_habit(habit_in: HabitCreate, current_user: User = Depends(get_c
     await db.refresh(habit)
     await invalidate_cache(f"user:{current_user.id}:habits")
     return habit
+
+@router.delete("")
+async def delete_all_habits(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    await db.execute(delete(Habit).where(Habit.user_id == current_user.id))
+    await db.commit()
+    
+    await invalidate_pattern(f"heatmap:{current_user.id}:*")
+    await invalidate_cache(f"user:{current_user.id}:habits")
+    
+    return {"message": "All habits deleted"}
 
 @router.put("/{habit_id}", response_model=HabitRead)
 async def update_habit(habit_id: str, habit_in: HabitUpdate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

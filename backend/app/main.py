@@ -30,7 +30,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex="https://.*\.github\.dev",
+    allow_origin_regex=r"https://.*\.github\.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,6 +42,10 @@ app.include_router(habits_router)
 app.include_router(heatmap_router)
 app.include_router(evaluations_router)
 app.include_router(ws_router)
+
+@app.get("/")
+async def root():
+    return {"message": "Fièrté API is operational. No excuses.", "status": "ruthless"}
 
 @app.get("/health")
 async def health_check():

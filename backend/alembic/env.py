@@ -3,7 +3,6 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
@@ -17,7 +16,7 @@ if config.config_file_name is not None:
 
 # Import models
 from app.database import Base
-from app.models import User, Habit, HabitLog, Evaluation
+from app.models import User, Habit, HabitLog, Evaluation  # noqa: F401
 from app.config import settings
 
 target_metadata = Base.metadata

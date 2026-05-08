@@ -1,19 +1,22 @@
 import json
-import asyncio
-from typing import List, Optional
+from typing import List
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-import google.generativeai as genai
+from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from ..config import settings
-from ..models import User, Habit, HabitLog, Evaluation
+from ..models import Habit, HabitLog, Evaluation
 from .cache_service import invalidate_cache
 
 async def negotiate_habits(goal: str) -> List[dict]:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        google_api_key=settings.GEMINI_API_KEY,
+        temperature=0.7
+    )
     
     system_prompt = """You are Fièrté, a ruthless AI performance coach.
 You do not coddle. You do not motivate with kindness.
@@ -26,11 +29,14 @@ Rules:
 - Habits must be completable daily. No weekly targets.
 - Be specific. "Exercise" is not a habit. "50 pull-ups" is."""
 
-    prompt = f"{system_prompt}\n\nGoal: {goal}"
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=f"Goal: {goal}")
+    ]
     
     try:
-        response = await asyncio.to_thread(model.generate_content, prompt)
-        content = response.text.strip()
+        response = await llm.ainvoke(messages)
+        content = str(response.content).strip()
         # Handle cases where LLM might wrap in markdown code blocks
         if content.startswith("```json"):
             content = content.replace("```json", "", 1).replace("```", "", 1).strip()
@@ -40,9 +46,13 @@ Rules:
         return json.loads(content)
     except (json.JSONDecodeError, Exception) as e:
         # Retry once
-        retry_prompt = f"{prompt}\n\nYour previous response was not valid JSON. Return ONLY a valid JSON array of habits."
-        response = await asyncio.to_thread(model.generate_content, retry_prompt)
-        content = response.text.strip()
+        retry_messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Goal: {goal}"),
+            SystemMessage(content="Your previous response was not valid JSON. Return ONLY a valid JSON array of habits.")
+        ]
+        response = await llm.ainvoke(retry_messages)
+        content = str(response.content).strip()
         if content.startswith("```json"):
             content = content.replace("```json", "", 1).replace("```", "", 1).strip()
         elif content.startswith("```"):
@@ -94,14 +104,17 @@ async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
             select(func.count(Evaluation.id))
             .where(Evaluation.user_id == user_id, Evaluation.overall_verdict == "PERFECT")
         )
-        streak = streak_result.scalar() + 1 # Simple streak count for prompt
+        streak = (streak_result.scalar() or 0) + 1 # Simple streak count for prompt
         prompt = f"You are Fièrté. A user has achieved 100% completion today. This is day {streak} of a perfect streak. Write a 1-2 sentence cold, reluctant acknowledgment. Do not be warm. Do not celebrate. Simply note it like a general noting a soldier met the minimum standard."
 
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        google_api_key=settings.GEMINI_API_KEY,
+        temperature=0.7
+    )
     
-    response = await asyncio.to_thread(model.generate_content, prompt)
-    ai_message = response.text.strip()
+    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    ai_message = str(response.content).strip()
     
     # 6. Progressive overload trigger
     overloaded_habits = []
@@ -142,3 +155,4 @@ async def progressive_overload(habit: Habit, db: AsyncSession):
     habit.difficulty_multiplier = round(new_multiplier, 2)
     habit.current_level += 1
     # Note: caller handles commit
+

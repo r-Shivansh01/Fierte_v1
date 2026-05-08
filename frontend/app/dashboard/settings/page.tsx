@@ -55,14 +55,8 @@ export default function SettingsPage() {
   const handleResetContract = async () => {
     if (resetInput !== "RESET") return;
     try {
-      // The spec says: DELETE all habits for user, set is_onboarded = false via PUT /auth/me, redirect to /onboarding
-      // We'll assume a single "reset" endpoint or do it sequentially
-      // For now, we'll do what's explicitly requested:
-      
       // 1. Delete all habits (cascades to logs in DB)
-      for (const habit of habits) {
-        await api.delete(`/habits/${habit.id}`);
-      }
+      await api.delete('/habits');
       
       // 2. Set is_onboarded = false
       await api.put("/auth/me", { is_onboarded: false });
