@@ -9,10 +9,30 @@ export const useHeatmap = (habitId: string, year: number = new Date().getFullYea
       const { data } = await api.get<HeatmapData>(`/heatmap/${habitId}`, {
         params: { year },
       });
-      return data;
+      
+      // Merge API data into full 365-day year
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+      const fullData = [];
+      const apiDataMap = new Map(data.data.map(d => [d.date, d]));
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const log = apiDataMap.get(dateStr);
+        fullData.push(log || {
+          date: dateStr,
+          completed: false,
+          value: undefined,
+        });
+      }
+
+      return {
+        ...data,
+        data: fullData,
+      };
     },
     staleTime: 60000,
-    placeholderData: (previousData) => {
+    placeholderData: () => {
       // Generate empty year data as placeholder
       const startDate = new Date(year, 0, 1);
       const endDate = new Date(year, 11, 31);
@@ -21,7 +41,7 @@ export const useHeatmap = (habitId: string, year: number = new Date().getFullYea
         emptyData.push({
           date: d.toISOString().split('T')[0],
           completed: false,
-          value: 0,
+          value: undefined,
         });
       }
       return {

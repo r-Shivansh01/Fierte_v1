@@ -40,7 +40,7 @@ export default function HeatmapGrid({ habitId, year = new Date().getFullYear() }
               // We need to check if the date actually has a log in the backend data
               // The hook pre-fills with empty data, so we need to know if 'completed' was actually set.
               // In our implementation, we'll assume the API returns the real log status.
-              if (day.value !== undefined && day.value !== 0) {
+              if (day.value !== undefined) {
                 bgColor = day.completed ? "#22c55e" : "#661010";
               }
 
