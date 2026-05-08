@@ -44,7 +44,7 @@ export default function LoginPage() {
         router.push("/onboarding");
       }
     } catch (err: any) {
-...
+      const detail = err.response?.data?.detail;
       if (Array.isArray(detail)) {
         setError(detail[0]?.msg || "Invalid credentials");
       } else {

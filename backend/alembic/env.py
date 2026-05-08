@@ -58,13 +58,17 @@ async def run_async_migrations() -> None:
 
     """
     from sqlalchemy.ext.asyncio import create_async_engine
+    
+    # Ensure we handle PgBouncer transaction mode by disabling prepared statements
+    connect_args = {}
+    if "pooler.supabase.com" in settings.DATABASE_URL or ":6543" in settings.DATABASE_URL:
+        connect_args["statement_cache_size"] = 0
+        connect_args["prepared_statement_cache_size"] = 0
+
     connectable = create_async_engine(
         settings.DATABASE_URL,
         poolclass=pool.NullPool,
-        connect_args={
-            "statement_cache_size": 0,
-            "prepared_statement_cache_size": 0
-        },
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
