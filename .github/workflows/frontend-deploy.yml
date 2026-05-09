@@ -13,11 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install Vercel CLI
-        run: npm install -g vercel
+          node-version: 24
       - name: Deploy to Vercel
-        run: vercel --prod --token "${{ secrets.VERCEL_TOKEN }}" --yes
+        run: npx vercel --prod --token "${{ secrets.VERCEL_TOKEN }}" --yes
         working-directory: ./frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
