@@ -21,16 +21,20 @@ app = FastAPI(
 )
 
 # CORS Middleware
+frontend_url = settings.FRONTEND_URL.rstrip("/")
 origins = [
-    settings.FRONTEND_URL,
+    frontend_url,
     "http://localhost:3000",
     "https://localhost:3000",
+    "https://fierte-v1.vercel.app",
 ]
+# Deduplicate while preserving order
+origins = list(dict.fromkeys(origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.github\.dev",
+    allow_origin_regex=r"https://.*\.(github\.dev|vercel\.app)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
