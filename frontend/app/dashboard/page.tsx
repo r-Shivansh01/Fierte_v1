@@ -3,11 +3,35 @@
 import { useEffect, useState } from "react";
 import { useHabits } from "@/lib/hooks/useHabits";
 import api from "@/lib/api";
-import { User } from "@/lib/types";
+import { User, Habit, HeatmapData } from "@/lib/types";
 import HabitCard from "@/components/dashboard/HabitCard";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
+function TotalStreak({ habits }: { habits: Habit[] }) {
+  const year = new Date().getFullYear();
+  const { data: streaks } = useQuery({
+    queryKey: ['total-streak', habits.map(h => h.id)],
+    queryFn: async () => {
+      const results = await Promise.all(
+        habits.map(async (habit) => {
+          try {
+            const { data } = await api.get<HeatmapData>(`/heatmap/${habit.id}`, { params: { year } });
+            return data.current_streak;
+          } catch {
+            return 0;
+          }
+        })
+      );
+      return Math.max(...results, 0);
+    },
+    staleTime: 60000,
+  });
+
+  const streak = streaks ?? 0;
+  return <>{streak} {streak === 1 ? "DAY" : "DAYS"}</>;
+}
 export default function DashboardPage() {
   const { habits, isLoading: habitsLoading } = useHabits();
   const [user, setUser] = useState<User | null>(null);
@@ -53,7 +77,7 @@ export default function DashboardPage() {
           </nav>
         </div>
         <div className="font-mono text-xs text-textSecondary uppercase tracking-[2px]">
-          TOTAL STREAK: <span className="text-accentRed font-bold">12 DAYS</span>
+          TOTAL STREAK: <span className="text-accentRed font-bold">{habits.length > 0 ? <TotalStreak habits={habits} /> : "0 DAYS"}</span>
         </div>
       </header>
 
