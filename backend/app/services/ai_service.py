@@ -13,7 +13,7 @@ from .cache_service import invalidate_cache
 
 async def negotiate_habits(goal: str) -> List[dict]:
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=settings.GEMINI_API_KEY,
         temperature=0.7,
         convert_system_message_to_human=True
@@ -109,7 +109,7 @@ async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
         prompt = f"You are Fièrté. A user has achieved 100% completion today. This is day {streak} of a perfect streak. Write a 1-2 sentence cold, reluctant acknowledgment. Do not be warm. Do not celebrate. Simply note it like a general noting a soldier met the minimum standard."
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=settings.GEMINI_API_KEY,
         temperature=0.7
     )
