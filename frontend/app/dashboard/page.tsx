@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useHabits } from "@/lib/hooks/useHabits";
 import api from "@/lib/api";
 import { User, Habit, HeatmapData } from "@/lib/types";
@@ -33,8 +34,14 @@ function TotalStreak({ habits }: { habits: Habit[] }) {
   return <>{streak} {streak === 1 ? "DAY" : "DAYS"}</>;
 }
 export default function DashboardPage() {
+  const router = useRouter();
   const { habits, isLoading: habitsLoading } = useHabits();
   const [user, setUser] = useState<User | null>(null);
+
+  const handleSignOut = useCallback(() => {
+    localStorage.removeItem("fierté_token");
+    router.push("/");
+  }, [router]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -76,8 +83,16 @@ export default function DashboardPage() {
             <Link href="/dashboard/settings" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px]">SETTINGS</Link>
           </nav>
         </div>
-        <div className="font-mono text-xs text-textSecondary uppercase tracking-[2px]">
-          TOTAL STREAK: <span className="text-accentRed font-bold">{habits.length > 0 ? <TotalStreak habits={habits} /> : "0 DAYS"}</span>
+        <div className="flex items-center gap-6">
+          <div className="font-mono text-xs text-textSecondary uppercase tracking-[2px]">
+            TOTAL STREAK: <span className="text-accentRed font-bold">{habits.length > 0 ? <TotalStreak habits={habits} /> : "0 DAYS"}</span>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="font-mono text-[10px] text-textMuted hover:text-accentRed uppercase tracking-[2px] transition-colors"
+          >
+            SIGN OUT
+          </button>
         </div>
       </header>
 

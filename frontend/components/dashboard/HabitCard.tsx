@@ -28,6 +28,12 @@ export default function HabitCard({ habit }: HabitCardProps) {
         />
       </div>
 
+      {habit.description && (
+        <p className="font-mono text-xs text-textMuted leading-relaxed -mt-2">
+          {habit.description}
+        </p>
+      )}
+
       <p className="font-mono text-xs text-textSecondary uppercase tracking-[2px]">
         TARGET: <span className="text-textPrimary">{effectiveTarget.toFixed(2)} {habit.target_unit}</span>
       </p>

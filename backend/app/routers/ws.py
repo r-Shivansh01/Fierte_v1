@@ -41,7 +41,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
                 habits = await ai_service.negotiate_habits(message["content"])
                 await websocket.send_json({"type": "habits_proposal", "content": habits})
                 
-            elif message["type"] in ["accept", "modify"]:
+            elif message["type"] == "accept":
                 habits_data = message["habits"]
                 
                 async with SessionLocal() as db:
@@ -50,7 +50,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
                         habit = Habit(
                             user_id=user_id,
                             name=h_data["name"],
-                            description=h_data["description"],
+                            description=h_data.get("description", ""),
                             target_value=h_data["target_value"],
                             target_unit=h_data["target_unit"]
                         )
@@ -67,6 +67,18 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
                     await db.commit()
                 
                 await websocket.send_json({"type": "contract_sealed", "habits": habits_data})
+                
+            elif message["type"] == "modify":
+                # User wants to renegotiate — send modified habits back to AI
+                habits_data = message["habits"]
+                await websocket.send_json({"type": "thinking", "content": "Re-evaluating your modifications..."})
+                
+                # Build a summary of what the user modified to send to AI
+                habit_summary = ", ".join([f"{h['name']} ({h['target_value']} {h['target_unit']})" for h in habits_data])
+                renegotiation_goal = f"The user has modified their proposed habits to: {habit_summary}. Re-evaluate and propose 3-4 refined daily habits based on these preferences. Keep the user's adjusted values if reasonable, but push harder where they went too easy."
+                
+                new_habits = await ai_service.negotiate_habits(renegotiation_goal)
+                await websocket.send_json({"type": "habits_proposal", "content": new_habits})
                 
     except WebSocketDisconnect:
         pass
