@@ -4,22 +4,16 @@ from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+import google.generativeai as genai
 
 from ..config import settings
 from ..models import Habit, HabitLog, Evaluation
 from .cache_service import invalidate_cache
 
-async def negotiate_habits(goal: str) -> List[dict]:
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=settings.GEMINI_API_KEY,
-        temperature=0.7,
-        convert_system_message_to_human=True
-    )
-    
-    system_prompt = """You are Fièrté, a ruthless AI performance coach.
+# Configure the Gemini SDK
+genai.configure(api_key=settings.GEMINI_API_KEY)
+
+NEGOTIATE_SYSTEM_PROMPT = """You are Fièrté, a ruthless AI performance coach.
 You do not coddle. You do not motivate with kindness.
 You analyze goals and convert them into the minimum viable set of daily habits — measurable, trackable, brutal.
 Rules:
@@ -30,37 +24,36 @@ Rules:
 - Habits must be completable daily. No weekly targets.
 - Be specific. "Exercise" is not a habit. "50 pull-ups" is."""
 
-    messages = [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=f"Goal: {goal}")
-    ]
-    
+
+async def _call_gemini(system_prompt: str, user_prompt: str) -> str:
+    """Call Gemini API directly using the google-generativeai SDK."""
+    model = genai.GenerativeModel(
+        model_name="gemini-2.5-flash",
+        system_instruction=system_prompt
+    )
+    response = await model.generate_content_async(user_prompt)
+    return response.text.strip()
+
+
+def _parse_json_response(content: str) -> list:
+    """Parse JSON from LLM response, stripping markdown code fences if present."""
+    if content.startswith("```json"):
+        content = content.replace("```json", "", 1).replace("```", "", 1).strip()
+    elif content.startswith("```"):
+        content = content.replace("```", "", 1).replace("```", "", 1).strip()
+    return json.loads(content)
+
+
+async def negotiate_habits(goal: str) -> List[dict]:
     try:
-        response = await llm.ainvoke(messages)
-        content = str(response.content).strip()
-        # Handle cases where LLM might wrap in markdown code blocks
-        if content.startswith("```json"):
-            content = content.replace("```json", "", 1).replace("```", "", 1).strip()
-        elif content.startswith("```"):
-            content = content.replace("```", "", 1).replace("```", "", 1).strip()
-            
-        return json.loads(content)
+        content = await _call_gemini(NEGOTIATE_SYSTEM_PROMPT, f"Goal: {goal}")
+        return _parse_json_response(content)
     except (json.JSONDecodeError, Exception) as e:
-        # Retry once — use HumanMessage for the retry instruction
-        # (Gemini only allows SystemMessage at position 0)
-        retry_messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=f"Goal: {goal}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a valid JSON array of habits. No markdown, no explanation.")
-        ]
-        response = await llm.ainvoke(retry_messages)
-        content = str(response.content).strip()
-        if content.startswith("```json"):
-            content = content.replace("```json", "", 1).replace("```", "", 1).strip()
-        elif content.startswith("```"):
-            content = content.replace("```", "", 1).replace("```", "", 1).strip()
-        
+        # Retry once with explicit JSON reminder
+        retry_prompt = f"Goal: {goal}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a valid JSON array of habits. No markdown, no explanation."
+        content = await _call_gemini(NEGOTIATE_SYSTEM_PROMPT, retry_prompt)
         try:
-            return json.loads(content)
+            return _parse_json_response(content)
         except json.JSONDecodeError:
             raise ValueError(f"AI returned invalid habit format: {e}")
 
@@ -96,9 +89,9 @@ async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
     failed_habits = ", ".join(failed_habits_list)
     
     if verdict == "FAIL":
-        prompt = f"You are Fièrté. A user has failed their habit contract today. User's habits: {habit_summary}. Completion rate: {int(completion_rate*100)}%. Habits failed: {failed_habits}. Write a harsh, personalized 2-3 sentence critique. Do not use profanity. Be cold, precise, and contemptuous. Address the user directly as 'you'. No emojis. No fluff."
+        prompt = f"A user has failed their habit contract today. User's habits: {habit_summary}. Completion rate: {int(completion_rate*100)}%. Habits failed: {failed_habits}. Write a harsh, personalized 2-3 sentence critique. Do not use profanity. Be cold, precise, and contemptuous. Address the user directly as 'you'. No emojis. No fluff."
     elif verdict == "PASS":
-        prompt = f"You are Fièrté. A user has partially completed their habit contract. Completion rate: {int(completion_rate*100)}%. Write a brief 1-2 sentence cold acknowledgment. Do not praise. Just note what was done and what was not."
+        prompt = f"A user has partially completed their habit contract. Completion rate: {int(completion_rate*100)}%. Write a brief 1-2 sentence cold acknowledgment. Do not praise. Just note what was done and what was not."
     else: # PERFECT
         # Fetch streak
         streak_result = await db.execute(
@@ -106,16 +99,10 @@ async def evaluate_user(user_id: str, db: AsyncSession) -> Evaluation:
             .where(Evaluation.user_id == user_id, Evaluation.overall_verdict == "PERFECT")
         )
         streak = (streak_result.scalar() or 0) + 1 # Simple streak count for prompt
-        prompt = f"You are Fièrté. A user has achieved 100% completion today. This is day {streak} of a perfect streak. Write a 1-2 sentence cold, reluctant acknowledgment. Do not be warm. Do not celebrate. Simply note it like a general noting a soldier met the minimum standard."
+        prompt = f"A user has achieved 100% completion today. This is day {streak} of a perfect streak. Write a 1-2 sentence cold, reluctant acknowledgment. Do not be warm. Do not celebrate. Simply note it like a general noting a soldier met the minimum standard."
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=settings.GEMINI_API_KEY,
-        temperature=0.7
-    )
-    
-    response = await llm.ainvoke([HumanMessage(content=prompt)])
-    ai_message = str(response.content).strip()
+    eval_system = "You are Fièrté, a ruthless AI performance coach. You do not coddle. You do not motivate with kindness. Be cold, precise, and contemptuous."
+    ai_message = await _call_gemini(eval_system, prompt)
     
     # 6. Progressive overload trigger
     overloaded_habits = []
@@ -156,4 +143,3 @@ async def progressive_overload(habit: Habit, db: AsyncSession):
     habit.difficulty_multiplier = round(new_multiplier, 2)
     habit.current_level += 1
     # Note: caller handles commit
-
