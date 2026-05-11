@@ -15,7 +15,8 @@ async def negotiate_habits(goal: str) -> List[dict]:
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=settings.GEMINI_API_KEY,
-        temperature=0.7
+        temperature=0.7,
+        convert_system_message_to_human=True
     )
     
     system_prompt = """You are Fièrté, a ruthless AI performance coach.
@@ -45,11 +46,11 @@ Rules:
             
         return json.loads(content)
     except (json.JSONDecodeError, Exception) as e:
-        # Retry once
+        # Retry once — use HumanMessage for the retry instruction
+        # (Gemini only allows SystemMessage at position 0)
         retry_messages = [
             SystemMessage(content=system_prompt),
-            HumanMessage(content=f"Goal: {goal}"),
-            SystemMessage(content="Your previous response was not valid JSON. Return ONLY a valid JSON array of habits.")
+            HumanMessage(content=f"Goal: {goal}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a valid JSON array of habits. No markdown, no explanation.")
         ]
         response = await llm.ainvoke(retry_messages)
         content = str(response.content).strip()
