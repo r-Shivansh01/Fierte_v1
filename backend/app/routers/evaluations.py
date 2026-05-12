@@ -56,7 +56,7 @@ async def backfill_evaluation(
     yesterday = date.today() - timedelta(days=1)
 
     # Skip if user onboarded today (no yesterday to evaluate)
-    if current_user.created_at and current_user.created_at.date() >= yesterday:
+    if current_user.created_at and current_user.created_at.date() > yesterday:
         return {"status": "too_new", "message": "Account too new for backfill"}
 
     # Check if evaluation already exists for yesterday
