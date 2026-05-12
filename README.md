@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./frontend/public/logo.png" width="120" alt="Fièrté Logo" style="border-radius: 0; margin-bottom: 16px;" />
+
 # FIÈRTÉ
 
 ### *No excuses. No participation trophies. Only output.*
