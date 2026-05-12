@@ -55,6 +55,18 @@ export default function DashboardPage() {
     fetchUser();
   }, []);
 
+  // Lazy evaluation backfill: generate yesterday's evaluation if the nightly cron missed it
+  useEffect(() => {
+    const backfill = async () => {
+      try {
+        await api.post("/evaluations/backfill");
+      } catch {
+        // Silent fail — backfill is best-effort
+      }
+    };
+    backfill();
+  }, []);
+
   if (habitsLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bgPrimary">
