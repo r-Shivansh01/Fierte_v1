@@ -23,42 +23,45 @@ export default function HeatmapGrid({ habitId, year = new Date().getFullYear() }
 
   return (
     <div className="flex flex-col space-y-2">
-      {/* Month Labels */}
-      <div className="flex text-[8px] text-textMuted font-mono">
-        {months.map(m => (
-          <div key={m} className="flex-1 text-left">{m}</div>
-        ))}
-      </div>
+      {/* Scrollable container for heatmap */}
+      <div className="overflow-x-auto -mx-2 px-2 pb-2">
+        {/* Month Labels */}
+        <div className="flex text-[8px] text-textMuted font-mono" style={{ minWidth: `${weeks.length * 10}px` }}>
+          {months.map(m => (
+            <div key={m} className="flex-1 text-left">{m}</div>
+          ))}
+        </div>
 
-      <div className="flex gap-[2px]">
-        {weeks.map((week, wIdx) => (
-          <div key={wIdx} className="flex flex-col gap-[2px]">
-            {week.map((day, dIdx) => {
-              const isToday = day.date === today;
-              let bgColor = "#111111"; // empty
-              
-              // We need to check if the date actually has a log in the backend data
-              // The hook pre-fills with empty data, so we need to know if 'completed' was actually set.
-              // In our implementation, we'll assume the API returns the real log status.
-              if (day.value !== undefined) {
-                bgColor = day.completed ? "#22c55e" : "#661010";
-              }
+        <div className="flex gap-[2px] w-fit">
+          {weeks.map((week, wIdx) => (
+            <div key={wIdx} className="flex flex-col gap-[2px]">
+              {week.map((day, dIdx) => {
+                const isToday = day.date === today;
+                let bgColor = "#111111"; // empty
+                
+                // We need to check if the date actually has a log in the backend data
+                // The hook pre-fills with empty data, so we need to know if 'completed' was actually set.
+                // In our implementation, we'll assume the API returns the real log status.
+                if (day.value !== undefined) {
+                  bgColor = day.completed ? "#22c55e" : "#661010";
+                }
 
-              return (
-                <div
-                  key={dIdx}
-                  title={`${day.date}: ${day.value || 0}`}
-                  className="w-[10px] h-[10px]"
-                  style={{
-                    backgroundColor: bgColor,
-                    outline: isToday ? "1px solid #ff2020" : "none",
-                    outlineOffset: isToday ? "1px" : "0"
-                  }}
-                />
-              );
-            })}
-          </div>
-        ))}
+                return (
+                  <div
+                    key={dIdx}
+                    title={`${day.date}: ${day.value || 0}`}
+                    className="w-2 h-2 sm:w-[10px] sm:h-[10px]"
+                    style={{
+                      backgroundColor: bgColor,
+                      outline: isToday ? "1px solid #ff2020" : "none",
+                      outlineOffset: isToday ? "1px" : "0"
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

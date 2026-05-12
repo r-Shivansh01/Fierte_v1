@@ -17,9 +17,9 @@ export default function HabitCard({ habit }: HabitCardProps) {
   const effectiveTarget = habit.target_value * habit.difficulty_multiplier;
 
   return (
-    <div className="bg-bgCard border border-border p-6 flex flex-col space-y-6">
-      <div className="flex justify-between items-start">
-        <h3 className="font-display font-bold text-2xl text-textPrimary uppercase tracking-tight">
+    <div className="bg-bgCard border border-border p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-6 overflow-hidden min-w-0">
+      <div className="flex justify-between items-start gap-2">
+        <h3 className="font-display font-bold text-lg sm:text-2xl text-textPrimary uppercase tracking-tight min-w-0">
           {habit.name}
         </h3>
         <DifficultyBadge 
@@ -40,8 +40,8 @@ export default function HabitCard({ habit }: HabitCardProps) {
 
       <HeatmapGrid habitId={habit.id} />
 
-      <div className="flex justify-between items-end border-t border-border pt-6">
-        <div className="flex gap-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 border-t border-border pt-4 sm:pt-6">
+        <div className="flex gap-6 sm:gap-8 flex-wrap">
           <StreakCounter 
             current={heatmap?.current_streak || 0} 
             longest={heatmap?.longest_streak || 0} 

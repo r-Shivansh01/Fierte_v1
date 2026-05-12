@@ -86,21 +86,21 @@ export default function SettingsPage() {
       className="min-h-screen bg-bgPrimary flex flex-col"
     >
       {/* Top Bar */}
-      <header className="h-16 border-b border-border flex items-center justify-between px-8 sticky top-0 bg-bgPrimary/80 backdrop-blur-sm z-50">
-        <div className="flex items-center gap-6">
-          <span className="font-mono text-sm text-textPrimary uppercase tracking-[2px]">
+      <header className="border-b border-border sticky top-0 bg-bgPrimary/80 backdrop-blur-sm z-50">
+        <div className="flex items-center justify-between px-4 sm:px-8 h-12 sm:h-16">
+          <span className="font-mono text-xs sm:text-sm text-textPrimary uppercase tracking-[2px] shrink-0">
             {user.username}
           </span>
-          <nav className="flex gap-4">
-            <Link href="/dashboard" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px]">ARENA</Link>
-            <Link href="/dashboard/locker-room" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px]">LOCKER ROOM</Link>
-            <Link href="/dashboard/settings" className="font-mono text-[10px] text-textPrimary uppercase tracking-[2px] border-b border-accentRed">SETTINGS</Link>
-          </nav>
         </div>
+        <nav className="flex gap-4 px-4 sm:px-8 pb-2 overflow-x-auto">
+          <Link href="/dashboard" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">ARENA</Link>
+          <Link href="/dashboard/locker-room" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">LOCKER ROOM</Link>
+          <Link href="/dashboard/settings" className="font-mono text-[10px] text-textPrimary uppercase tracking-[2px] border-b border-accentRed whitespace-nowrap">SETTINGS</Link>
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="p-8 max-w-[800px] mx-auto w-full space-y-16">
+      <main className="p-4 sm:p-8 max-w-[800px] mx-auto w-full space-y-10 sm:space-y-16">
         {/* Active Habits */}
         <section>
           <h2 className="font-display font-black text-2xl text-textPrimary uppercase mb-8 tracking-tight">
@@ -108,7 +108,7 @@ export default function SettingsPage() {
           </h2>
           <div className="space-y-4">
             {habits.map((habit) => (
-              <div key={habit.id} className="bg-bgCard border border-border p-4 flex justify-between items-center">
+              <div key={habit.id} className="bg-bgCard border border-border p-3 sm:p-4 flex justify-between items-center gap-2">
                 <div>
                   <div className="font-mono text-sm text-textPrimary uppercase">{habit.name}</div>
                   <div className="font-mono text-[10px] text-textSecondary uppercase">
@@ -188,7 +188,7 @@ export default function SettingsPage() {
               RESTART FROM ZERO
             </button>
           ) : (
-            <div className="bg-accentRed/5 border border-accentRed/20 p-6 space-y-6">
+            <div className="bg-accentRed/5 border border-accentRed/20 p-4 sm:p-6 space-y-4 sm:space-y-6">
               <p className="font-mono text-xs text-accentRed uppercase leading-relaxed">
                 Are you resetting because you failed? Thought so. Type <span className="font-bold">RESET</span> to confirm your surrender.
               </p>

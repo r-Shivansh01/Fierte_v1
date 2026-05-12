@@ -23,6 +23,12 @@
   }
 }
 
+/* Prevent horizontal overflow on all viewports */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Custom noise texture for background */
 .noise-bg {
   position: fixed;
@@ -38,4 +44,19 @@
 /* Remove border radius as per brutalist design */
 * {
   border-radius: 0 !important;
+}
+
+/* Thin scrollbar for heatmap scroll containers */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: var(--border);
 }

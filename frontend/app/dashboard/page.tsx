@@ -72,33 +72,33 @@ export default function DashboardPage() {
       className="min-h-screen bg-bgPrimary flex flex-col"
     >
       {/* Top Bar */}
-      <header className="h-16 border-b border-border flex items-center justify-between px-8 sticky top-0 bg-bgPrimary/80 backdrop-blur-sm z-50">
-        <div className="flex items-center gap-6">
-          <span className="font-mono text-sm text-textPrimary uppercase tracking-[2px]">
+      <header className="border-b border-border sticky top-0 bg-bgPrimary/80 backdrop-blur-sm z-50">
+        <div className="flex items-center justify-between px-4 sm:px-8 h-12 sm:h-16">
+          <span className="font-mono text-xs sm:text-sm text-textPrimary uppercase tracking-[2px] shrink-0">
             {user.username}
           </span>
-          <nav className="flex gap-4">
-            <Link href="/dashboard" className="font-mono text-[10px] text-textPrimary uppercase tracking-[2px] border-b border-accentRed">ARENA</Link>
-            <Link href="/dashboard/locker-room" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px]">LOCKER ROOM</Link>
-            <Link href="/dashboard/settings" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px]">SETTINGS</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="font-mono text-xs text-textSecondary uppercase tracking-[2px]">
-            TOTAL STREAK: <span className="text-accentRed font-bold">{habits.length > 0 ? <TotalStreak habits={habits} /> : "0 DAYS"}</span>
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="font-mono text-[10px] sm:text-xs text-textSecondary uppercase tracking-[2px] whitespace-nowrap">
+              TOTAL STREAK: <span className="text-accentRed font-bold">{habits.length > 0 ? <TotalStreak habits={habits} /> : "0 DAYS"}</span>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="font-mono text-[10px] text-textMuted hover:text-accentRed uppercase tracking-[2px] transition-colors shrink-0"
+            >
+              SIGN OUT
+            </button>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="font-mono text-[10px] text-textMuted hover:text-accentRed uppercase tracking-[2px] transition-colors"
-          >
-            SIGN OUT
-          </button>
         </div>
+        <nav className="flex gap-4 px-4 sm:px-8 pb-2 overflow-x-auto">
+          <Link href="/dashboard" className="font-mono text-[10px] text-textPrimary uppercase tracking-[2px] border-b border-accentRed whitespace-nowrap">ARENA</Link>
+          <Link href="/dashboard/locker-room" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">LOCKER ROOM</Link>
+          <Link href="/dashboard/settings" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">SETTINGS</Link>
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="p-8">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-[1400px] mx-auto">
+      <main className="p-4 sm:p-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-8 max-w-[1400px] mx-auto">
           {habits.map((habit) => (
             <HabitCard key={habit.id} habit={habit} />
           ))}
