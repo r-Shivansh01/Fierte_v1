@@ -21,8 +21,10 @@ export default function LogHabitButton({ habitId, unit, target }: LogHabitButton
 
   const handleLog = async () => {
     if (!value) return;
+    const parsedValue = parseFloat(value);
+    if (parsedValue < 0) return;
     try {
-      await logHabit({ habitId, value: parseFloat(value) });
+      await logHabit({ habitId, value: parsedValue });
       setIsLogging(false);
       setValue("");
     } catch (error) {
@@ -56,6 +58,7 @@ export default function LogHabitButton({ habitId, unit, target }: LogHabitButton
         <div className="flex items-center gap-4 bg-bgSecondary p-4">
           <input
             type="number"
+            min="0"
             placeholder={`VALUE (${unit})`}
             value={value}
             onChange={(e) => setValue(e.target.value)}

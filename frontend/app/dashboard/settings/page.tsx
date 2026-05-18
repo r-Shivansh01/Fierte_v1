@@ -37,11 +37,13 @@ export default function SettingsPage() {
 
   const handleAddHabit = async () => {
     if (!newName || !newTarget) return;
+    const parsedTarget = parseFloat(newTarget);
+    if (parsedTarget < 0) return;
     try {
       await createHabit({
         name: newName,
         description: newDesc,
-        target_value: parseFloat(newTarget),
+        target_value: parsedTarget,
         target_unit: newUnit
       });
       setNewName("");
@@ -145,6 +147,7 @@ export default function SettingsPage() {
             <input 
               placeholder="TARGET VALUE" 
               type="number"
+              min="0"
               value={newTarget}
               onChange={(e) => setNewTarget(e.target.value)}
               className="bg-bgSecondary border border-border p-3 font-mono text-xs text-textPrimary focus:outline-none" 

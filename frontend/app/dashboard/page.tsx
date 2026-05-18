@@ -39,8 +39,10 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
 
   const handleSignOut = useCallback(() => {
-    localStorage.removeItem("fierté_token");
-    router.push("/");
+    if (window.confirm("Are you sure you want to sign out?")) {
+      localStorage.removeItem("fierté_token");
+      router.push("/");
+    }
   }, [router]);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={handleSignOut}
-              className="font-mono text-[10px] text-textMuted hover:text-accentRed uppercase tracking-[2px] transition-colors shrink-0"
+              className="font-mono text-[10px] text-textSecondary hover:text-accentRed uppercase tracking-[2px] transition-colors shrink-0"
             >
               SIGN OUT
             </button>
