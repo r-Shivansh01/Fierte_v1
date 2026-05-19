@@ -38,11 +38,15 @@ export default function DashboardPage() {
   const { habits, isLoading: habitsLoading } = useHabits();
   const [user, setUser] = useState<User | null>(null);
 
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
   const handleSignOut = useCallback(() => {
-    if (window.confirm("Are you sure you want to sign out?")) {
-      localStorage.removeItem("fierté_token");
-      router.push("/");
-    }
+    setShowSignOutConfirm(true);
+  }, []);
+
+  const confirmSignOut = useCallback(() => {
+    localStorage.removeItem("fierté_token");
+    router.push("/");
   }, [router]);
 
   useEffect(() => {
@@ -132,6 +136,38 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Sign Out Confirmation Modal */}
+      {showSignOutConfirm && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-bgCard border border-border p-6 max-w-sm w-full flex flex-col items-center text-center gap-6 shadow-2xl"
+          >
+            <div className="font-display font-bold text-xl text-textPrimary uppercase tracking-tight">
+              LEAVING THE ARENA?
+            </div>
+            <p className="font-mono text-xs text-textSecondary uppercase tracking-[1px] leading-relaxed">
+              Are you sure you want to sign out?
+            </p>
+            <div className="flex gap-4 w-full">
+              <button 
+                onClick={() => setShowSignOutConfirm(false)}
+                className="flex-1 border border-border text-textSecondary py-3 font-mono text-[10px] font-bold tracking-[2px] uppercase hover:text-textPrimary transition-colors"
+              >
+                STAY
+              </button>
+              <button 
+                onClick={confirmSignOut}
+                className="flex-1 bg-accentRed text-white py-3 font-mono text-[10px] font-bold tracking-[2px] uppercase hover:bg-[#cc0000] transition-colors"
+              >
+                SIGN OUT
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }
