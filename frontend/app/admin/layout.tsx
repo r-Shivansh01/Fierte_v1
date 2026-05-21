@@ -1,5 +1,8 @@
+"use client";
+
 import { ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +24,15 @@ const sidebarLinks = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    if (window.confirm("Disconnect from SYS_ADMIN?")) {
+      localStorage.removeItem("fierté_token");
+      router.push("/");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-bgPrimary text-textPrimary overflow-hidden font-mono selection:bg-accentRed selection:text-white">
       {/* Sidebar */}
@@ -51,7 +63,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <FileText className="w-5 h-5 mr-4 opacity-70 group-hover:opacity-100" />
             Documentation
           </button>
-          <button className="flex items-center text-sm text-textSecondary hover:text-accentRed w-full uppercase tracking-wider group">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center text-sm text-textSecondary hover:text-accentRed w-full uppercase tracking-wider group"
+          >
             <LogOut className="w-5 h-5 mr-4 opacity-70 group-hover:opacity-100" />
             Logout
           </button>
