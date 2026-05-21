@@ -7,6 +7,9 @@ from uuid import UUID
 
 from ..database import get_db
 from ..models.user import User
+from ..models.habit import Habit
+from ..models.habit_log import HabitLog
+from ..models.evaluation import Evaluation
 from ..schemas.user import UserRead, AdminUserCreate, AdminUserUpdate
 from ..dependencies import require_admin
 from ..services import auth_service
@@ -97,6 +100,7 @@ async def delete_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db)
 ):
+    from sqlalchemy import delete
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalars().first()
     if not user:
@@ -109,6 +113,11 @@ async def delete_user(
         if root_count <= 1:
             raise HTTPException(status_code=400, detail="Cannot delete the last ROOT_ADMIN")
             
+    # Manually delete dependent records to avoid IntegrityError if DB lacks CASCADE constraints
+    await db.execute(delete(HabitLog).where(HabitLog.user_id == user_id))
+    await db.execute(delete(Evaluation).where(Evaluation.user_id == user_id))
+    await db.execute(delete(Habit).where(Habit.user_id == user_id))
+
     await db.delete(user)
     await db.commit()
     return {"message": "User deleted successfully"}
