@@ -12,5 +12,6 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     goal_statement = Column(Text, nullable=True)
     is_onboarded = Column(Boolean, default=False)
+    role = Column(String(20), default="USER", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

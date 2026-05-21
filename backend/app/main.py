@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .routers import auth_router, habits_router, heatmap_router, evaluations_router, ws_router
+from .routers.admin import router as admin_router
 from .workers.nightly_worker import start_scheduler, shutdown_scheduler
 
 @asynccontextmanager
@@ -46,6 +47,7 @@ app.include_router(habits_router)
 app.include_router(heatmap_router)
 app.include_router(evaluations_router)
 app.include_router(ws_router)
+app.include_router(admin_router)
 
 @app.get("/")
 async def root():

@@ -11,6 +11,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const isPublicRoute = pathname === "/" || pathname === "/login" || pathname === "/register";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -28,6 +29,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         try {
           const { data: user } = await api.get<User>("/auth/me");
           
+          if (isAdminRoute && user.role !== "ROOT_ADMIN") {
+            router.push("/dashboard");
+            return;
+          }
+
           if (isPublicRoute) {
             if (user.is_onboarded) {
               router.push("/dashboard");

@@ -14,6 +14,7 @@ class UserRead(UserBase):
     id: UUID
     goal_statement: Optional[str] = None
     is_onboarded: bool
+    role: str = "USER"
     created_at: datetime
     updated_at: datetime
 
