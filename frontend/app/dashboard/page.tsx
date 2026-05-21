@@ -111,6 +111,9 @@ export default function DashboardPage() {
           <Link href="/dashboard" className="font-mono text-[10px] text-textPrimary uppercase tracking-[2px] border-b border-accentRed whitespace-nowrap">ARENA</Link>
           <Link href="/dashboard/locker-room" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">LOCKER ROOM</Link>
           <Link href="/dashboard/settings" className="font-mono text-[10px] text-textSecondary hover:text-textPrimary uppercase tracking-[2px] whitespace-nowrap">SETTINGS</Link>
+          {user.role === "ROOT_ADMIN" && (
+            <Link href="/admin" className="font-mono text-[10px] text-accentRed hover:text-white uppercase tracking-[2px] whitespace-nowrap">ADMIN</Link>
+          )}
         </nav>
       </header>
 
