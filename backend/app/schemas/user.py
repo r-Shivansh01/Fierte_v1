@@ -25,3 +25,10 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     goal_statement: Optional[str] = None
     is_onboarded: Optional[bool] = None
+
+class AdminUserCreate(UserCreate):
+    role: str = "USER"
+
+class AdminUserUpdate(BaseModel):
+    username: Optional[str] = None
+    role: Optional[str] = None
